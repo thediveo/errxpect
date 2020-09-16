@@ -44,36 +44,46 @@ type errorAssertion struct {
 	actual []interface{}
 }
 
-func (errorassertion *errorAssertion) match(matcher types.GomegaMatcher, matches bool, optionalDescription ...interface{}) bool {
+// match first checks that the actual multi-value non-error results are
+// consistent with the error result (zero in case of an error, otherwise allowed
+// to be non-zero). Only then is the user-specified matcher run, only with the
+// trailing error result value. If necessary, the matcher is inverted when using
+// with ShouldNot(), NotTo() and ToNot().
+func (errorassertion *errorAssertion) match(matcher types.GomegaMatcher, invert bool, optionalDescription ...interface{}) bool {
 	if !gomega.ExpectWithOffset(2+errorassertion.offset, errorassertion.actual).
 		To(haveOnlyTrailingError(errorassertion.actual), optionalDescription...) {
 		// Gosh! There is something rotten with the return values: a non-nil
 		// error, yet the other return values aren't all zero.
 		return false
 	}
-	return matches == gomega.ExpectWithOffset(
-		1+errorassertion.offset, errorassertion.actual[len(errorassertion.actual)-1]).
+	if invert {
+		return gomega.ExpectWithOffset(
+			2+errorassertion.offset, errorassertion.actual[len(errorassertion.actual)-1]).
+			To(gomega.Not(matcher), optionalDescription...)
+	}
+	return gomega.ExpectWithOffset(
+		2+errorassertion.offset, errorassertion.actual[len(errorassertion.actual)-1]).
 		To(matcher, optionalDescription...)
 }
 
 func (errorassertion *errorAssertion) Should(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
-	return errorassertion.match(matcher, true, optionalDescription...)
+	return errorassertion.match(matcher, false, optionalDescription...)
 }
 
 func (errorassertion *errorAssertion) ShouldNot(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
-	return errorassertion.match(matcher, false, optionalDescription...)
-}
-
-func (errorassertion *errorAssertion) To(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
 	return errorassertion.match(matcher, true, optionalDescription...)
 }
 
-func (errorassertion *errorAssertion) NotTo(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
+func (errorassertion *errorAssertion) To(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
 	return errorassertion.match(matcher, false, optionalDescription...)
 }
 
+func (errorassertion *errorAssertion) NotTo(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
+	return errorassertion.match(matcher, true, optionalDescription...)
+}
+
 func (errorassertion *errorAssertion) ToNot(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
-	return errorassertion.match(matcher, false, optionalDescription...)
+	return errorassertion.match(matcher, true, optionalDescription...)
 }
 
 func haveOnlyTrailingError(actuals []interface{}) types.GomegaMatcher {

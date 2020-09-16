@@ -27,33 +27,42 @@ func TestModelMatchers(t *testing.T) {
 	RunSpecs(t, "geps module")
 }
 
+type myerr error
+
 var _ = Describe("Errpect", func() {
 
 	It("Succeed()s with nil error", func() {
+		// First, for zero non-error return values...
 		Errxpect(func() (string, error) { return "", nil }()).To(Succeed())
+		Errxpect(func() (string, error) { return "", nil }()).Should(Succeed())
 		Errxpect(func() (string, error) { return "", nil }()).To(Succeed(), "DOH!")
+		Errxpect(func() (string, error) { return "", myerr(nil) }()).To(Succeed())
+		// ...and then for non-zero return values, when the returned error is
+		// nil.
+		Errxpect(func() (string, error) { return "true", nil }()).To(Succeed(), "DOH!")
 	})
 
-	It("HaveOccured()s with non-nil error", func() {
+	It("HaveOccured()s and Not(Succeed())s with non-nil error", func() {
 		Errxpect(func() (string, error) { return "", errors.New("42") }()).To(HaveOccurred())
+		Errxpect(func() (string, error) { return "", errors.New("42") }()).ToNot(Succeed())
+		Errxpect(func() (string, error) { return "", errors.New("42") }()).NotTo(Succeed())
+		Errxpect(func() (string, error) { return "", errors.New("42") }()).ShouldNot(Succeed())
 	})
 
-	It("", func() {
+	It("passes on an additional description", func() {
 		s := InterceptGomegaFailures(
 			func() { Errxpect(func() (string, error) { return "", nil }()).To(HaveOccurred(), "DOH!") })
 		Expect(s).To(ConsistOf(HavePrefix("DOH!\nExpected an error to have occurred.")))
+	})
 
-		//
-		Errxpect(func() (string, error) { return "true", nil }()).To(Succeed(), "DOH!")
-
-		// When final err return value is non-nil, all preceeding return values
+	It("rejects non-zero return values in case of a non-zero error", func() {
+		// When final err return value is non-nil, all preceding return values
 		// must be zero.
-		s = InterceptGomegaFailures(
+		s := InterceptGomegaFailures(
 			func() {
 				Errxpect(func() (string, error) { return "foobar", errors.New("dOH! ") }()).To(Succeed(), "DOH!")
 			})
 		Expect(s).To(ConsistOf(HavePrefix("DOH!\nUnexpected non-nil/non-zero actual non-error argument at index 1:")))
-
 	})
 
 })
