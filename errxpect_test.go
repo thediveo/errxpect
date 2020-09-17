@@ -29,6 +29,8 @@ func TestModelMatchers(t *testing.T) {
 
 type myerr error
 
+func foo() (string, error) { return "true", nil }
+
 var _ = Describe("Errpect", func() {
 
 	It("Succeed()s with nil error", func() {
@@ -40,6 +42,10 @@ var _ = Describe("Errpect", func() {
 		// ...and then for non-zero return values, when the returned error is
 		// nil.
 		Errxpect(func() (string, error) { return "true", nil }()).To(Succeed(), "DOH!")
+		// And now with offset.
+		func() {
+			Errxpect(foo()).WithOffset(1).To(Succeed(), "DOH!")
+		}()
 	})
 
 	It("HaveOccured()s and Not(Succeed())s with non-nil error", func() {

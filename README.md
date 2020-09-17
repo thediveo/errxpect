@@ -34,6 +34,15 @@ place of `Expect(...)`. And enjoy more fluent error test assertions.
 Errxpect(Foo(42)).To(HaveOccured())
 ```
 
+As Golang doesn't unpack multiple return values automatically when there is
+another parameter present in a function call, error expectations with stack
+offsets need to the phrased as follows using `.WithOffset(offset)`, keeping them
+elegant:
+
+```go
+Errxpect(Foo(42)).WithOffset(1).To(HaveOccured())
+```
+
 ## Copyright and License
 
 `errxpect` is Copyright 2020 Harald Albrecht, and licensed under the Apache

@@ -12,34 +12,37 @@ import (
 // Errxpect wraps an actual multi-value allowing error assertions to be made on
 // it:
 //
-//    Errxpect(func() (string, bool, error) { return "", false, errors.New("DOH!") }()).To(Equal("foo"))
-func Errxpect(actual ...interface{}) gomega.Assertion {
-	return ErrxpectWithOffset(0, actual...)
-}
-
-// ErrxpectWithOffset wraps an actual multi-value allowing error assertions to
-// be made on it:
+//    func foo() (string, bool, error) { return "", false, errors.New("DOH!") }
 //
-//    ErrxpectWithOffset(func() (string, bool, error) { return "", false, errors.New("DOH!") }()).To(Equal("foo"))
+//    Errxpect(foo()).To(HaveOccured())
 //
-// Unlike `Errxpect`, `ErrxpectWithOffset` takes an additional integer argument
-// that is used to modify the call-stack offset when computing line numbers.
+// As Golang doesn't feature automatic multi-return value passing into a varargs
+// function if there are additional parameters present, use WithOffset() on the
+// return value of Errxpect, such as:
+//    Errxpect(foo()).WithOffset(1).To(Succeed())
 //
-// This is most useful in helper functions that make assertions.  If you want
-// Gomega's error message to refer to the calling line in the test (as opposed
-// to the line in the helper function) set the first argument of
-// `ErrxpectWithOffset` appropriately.
-func ErrxpectWithOffset(offset int, actual ...interface{}) gomega.Assertion {
-	return &errorAssertion{
-		offset: offset,
+func Errxpect(actual ...interface{}) *ErrorAssertion {
+	return &ErrorAssertion{
 		actual: actual,
 	}
 }
 
-// errorAssertion implements the GomegaMatcher interface, while checking that
+// WithOffset replaces ExpectWithOffset() when using Errxpect in order to modify
+// the call-stack offset when computing line numbers.
+//
+// This is most useful in helper functions that make assertions.  If you want
+// Gomega's error message to refer to the calling line in the test (as opposed
+// to the line in the helper function) set the argument of
+// `Errxpect(...).WithOffset(offset)` appropriately.
+func (errorassertion *ErrorAssertion) WithOffset(offset int) *ErrorAssertion {
+	errorassertion.offset = offset
+	return errorassertion
+}
+
+// ErrorAssertion implements the GomegaMatcher interface, while checking that
 // actual multi-value returns are only consisting of the trailing error and all
 // other return values must be zero.
-type errorAssertion struct {
+type ErrorAssertion struct {
 	offset int
 	actual []interface{}
 }
@@ -49,7 +52,7 @@ type errorAssertion struct {
 // to be non-zero). Only then is the user-specified matcher run, only with the
 // trailing error result value. If necessary, the matcher is inverted when using
 // with ShouldNot(), NotTo() and ToNot().
-func (errorassertion *errorAssertion) match(matcher types.GomegaMatcher, invert bool, optionalDescription ...interface{}) bool {
+func (errorassertion *ErrorAssertion) match(matcher types.GomegaMatcher, invert bool, optionalDescription ...interface{}) bool {
 	if !gomega.ExpectWithOffset(2+errorassertion.offset, errorassertion.actual).
 		To(haveOnlyTrailingError(errorassertion.actual), optionalDescription...) {
 		// Gosh! There is something rotten with the return values: a non-nil
@@ -66,23 +69,28 @@ func (errorassertion *errorAssertion) match(matcher types.GomegaMatcher, invert 
 		To(matcher, optionalDescription...)
 }
 
-func (errorassertion *errorAssertion) Should(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
+// Should makes an assertion that should be true.
+func (errorassertion *ErrorAssertion) Should(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
 	return errorassertion.match(matcher, false, optionalDescription...)
 }
 
-func (errorassertion *errorAssertion) ShouldNot(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
+// ShouldNot makes an assertion that should not be true.
+func (errorassertion *ErrorAssertion) ShouldNot(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
 	return errorassertion.match(matcher, true, optionalDescription...)
 }
 
-func (errorassertion *errorAssertion) To(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
+// To makes an assertion that should be true.
+func (errorassertion *ErrorAssertion) To(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
 	return errorassertion.match(matcher, false, optionalDescription...)
 }
 
-func (errorassertion *errorAssertion) NotTo(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
+// NotTo makes an assertion that should not be true.
+func (errorassertion *ErrorAssertion) NotTo(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
 	return errorassertion.match(matcher, true, optionalDescription...)
 }
 
-func (errorassertion *errorAssertion) ToNot(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
+// ToNot makes an assertion that should not be true.
+func (errorassertion *ErrorAssertion) ToNot(matcher types.GomegaMatcher, optionalDescription ...interface{}) bool {
 	return errorassertion.match(matcher, true, optionalDescription...)
 }
 
