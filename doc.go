@@ -1,5 +1,8 @@
 /*
 
+Package errxpect supplies Gomega with assertions for mult-return value functions
+for simpler error testing.
+
 A typical use of the errxpect package is by importing it into the in the current
 file's file block for easy reference without needing the package name.
 

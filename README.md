@@ -1,6 +1,6 @@
 # errxpect
 
-[![GoDoc](https://godoc.org/github.com/thediveo/errxpect?status.svg)](http://godoc.org/github.com/thediveo/errxpect)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/thediveo/errxpect)](https://pkg.go.dev/github.com/thediveo/errxpect)
 [![GitHub](https://img.shields.io/github/license/thediveo/errxpect)](https://img.shields.io/github/license/thediveo/errxpect)
 ![build and test](https://github.com/thediveo/errxpect/workflows/build%20and%20test/badge.svg?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/thediveo/errxpect)](https://goreportcard.com/report/github.com/thediveo/errxpect)
