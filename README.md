@@ -1,5 +1,20 @@
 # errxpect
 
+**Note:** [Gomega](https://github.com/onsi/gomega) as of version 1.17.0 now
+covers error-related assertions on functions returning multiple values. Thus,
+this module is not required anymore. As error-related assertions are now
+directly integrated, Gomega's syntax is as follows, using `Error`:
+
+```go
+// was: Errxpect(Foo(42)).To(HaveOccured())
+Expect(Foo(42)).Error().To(HaveOccured())
+```
+
+`WithOffset` has also been integrated into not only `Expect`, but also
+`Eventually` and `Constantly`.
+
+---
+
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/thediveo/errxpect)](https://pkg.go.dev/github.com/thediveo/errxpect)
 [![GitHub](https://img.shields.io/github/license/thediveo/errxpect)](https://img.shields.io/github/license/thediveo/errxpect)
 ![build and test](https://github.com/thediveo/errxpect/workflows/build%20and%20test/badge.svg?branch=master)
